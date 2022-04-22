@@ -2,6 +2,8 @@ package io.vexagonverp.sipwrapper.controller;
 
 import com.ceridwen.circulation.SIP.transport.SocketConnection;
 import com.ceridwen.circulation.SIP.messages.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,11 +11,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.logging.Logger;
-
 @RestController
 @RequestMapping("/api")
 public class SipWrapperController {
+    private static final Logger log = LoggerFactory.getLogger(SipWrapperController.class);
     @GetMapping("/")
     public ResponseEntity<?> testApi() {
         SocketConnection connection;
@@ -21,10 +22,11 @@ public class SipWrapperController {
         connection = new SocketConnection();
         connection.setHost("count.intelligentrfid.com.au");
         connection.setPort(6002);
-        connection.setConnectionTimeout(30000);
+        connection.setConnectionTimeout(3000);
         connection.setIdleTimeout(30000);
         connection.setRetryAttempts(2);
         connection.setRetryWait(500);
+        connection.setStrictChecksumChecking(true);
         Login loginInfo = new Login();
         loginInfo.setLocationCode("Location Institution ID");
         loginInfo.setLoginPassword("LoginPassword");
@@ -34,9 +36,9 @@ public class SipWrapperController {
             connection.connect();
             connection.setStrictChecksumChecking(true);
             loginResponse=connection.send(loginInfo);
-            loginResponse.xmlEncode(System.out);
+            log.info(loginResponse.toString());
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(String.valueOf(ex));
         } finally {
             connection.disconnect();
         }
