@@ -1,9 +1,13 @@
 package io.vexagonverp.sipwrapper.controller;
 
+import com.ceridwen.circulation.SIP.messages.Login;
+import com.ceridwen.circulation.SIP.messages.LoginResponse;
+import com.ceridwen.circulation.SIP.messages.Message;
 import com.ceridwen.circulation.SIP.transport.SocketConnection;
-import com.ceridwen.circulation.SIP.messages.*;
+import io.vexagonverp.sipwrapper.service.LoginService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class SipWrapperController {
     private static final Logger log = LoggerFactory.getLogger(SipWrapperController.class);
+    private final LoginService loginService;
+
+    @Autowired
+    public SipWrapperController(LoginService loginService) {
+        this.loginService = loginService;
+    }
+
     @GetMapping("/")
     public ResponseEntity<?> testApi() {
         SocketConnection connection;
-
         connection = new SocketConnection();
         connection.setHost("count.intelligentrfid.com.au");
         connection.setPort(6002);
@@ -31,21 +41,20 @@ public class SipWrapperController {
         loginInfo.setLocationCode("Location Institution ID");
         loginInfo.setLoginPassword("LoginPassword");
         loginInfo.setLoginUserId("LoginUserID");
-        Message loginResponse;
+        Message loginResponse = new LoginResponse();
         try {
             connection.connect();
             connection.setStrictChecksumChecking(true);
-            loginResponse=connection.send(loginInfo);
+            loginResponse = loginService.Login(loginInfo, connection);
             log.info(loginResponse.toString());
         } catch (Exception ex) {
-            log.error(String.valueOf(ex));
+            log.error(ex.getMessage());
         } finally {
             connection.disconnect();
         }
 
         HttpHeaders responseHeaders = new HttpHeaders();
-        System.out.println("Hello world");
         return ResponseEntity.status(HttpStatus.OK).headers(responseHeaders)
-                .body("Hello world");
+                .body(loginResponse.toString());
     }
 }
